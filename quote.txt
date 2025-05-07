@@ -1,0 +1,700 @@
+import React, { useState } from 'react';
+
+const InsuranceQuoteComparator = () => {
+  // State for extracted data from documents
+  const [extractedData, setExtractedData] = useState([]);
+  // State for the template data
+  const [templateData, setTemplateData] = useState({
+    jobDescription: 'User Defined',
+    clientName: 'User Defined',
+    policyType: 'User Defined',
+    contractPeriod: 36,
+    extMaintCover: 12,
+    contractValue: 'User Defined',
+    totalSumInsured: 'User Defined',
+  });
+  // State for loading status
+  const [isLoading, setIsLoading] = useState(false);
+  // State for bearer token
+  const [bearerToken, setBearerToken] = useState("");
+
+  // Standard coverages and add-ons from your template
+  const standardCoverages = [
+    'Basic Premium', 'Earthquake - II', 'STFI', 'Terrorism', 'Marine',
+    'Total Premium excl GST', 'GST @ 18%', 'Total Premium incl GST'
+  ];
+
+  const addOnCovers = [
+    'Escalation', 'Earthquake', 'Waiver of Subrogation', 'Design Defect - DE3',
+    'Owners Surrounding property with Flexa', 'Cover for offsite storage, fabrication',
+    'Plans & Documents', 'Put to Use', 'Breakage of glass', 'Multiple Insured Clause',
+    '50/50 Clause', '72 hours clause', 'Free Auto. Reinstatement upto 10%',
+    'Professional Fees', 'Waiver of contribution clause', 'Additional custom duty - upto 10 Cr',
+    'Air freight & exp freight upto 30% claim', 'Loss Minimisation Expense',
+    'TPL with Cross Liability', 'Debris Removal (Incl Foreign)', 'Cessation of Works',
+    'Claim Preparation Costs', 'Temporary Repair Clause', 'Improvement cost actual of insured property'
+  ];
+
+  // Insurers from your template
+  const insurers = ['ICICI', 'TATA', 'BAJAJ', 'HDFC', 'SBI'];
+
+  // Function to handle bearer token input
+  const handleTokenChange = (e) => {
+    setBearerToken(e.target.value);
+  };
+
+  // Function to extract data from documents
+// Function to extract data from documents
+const extractData = async () => {
+    if (!bearerToken) {
+      alert("Please enter a bearer token for authentication");
+      return;
+    }
+    
+    setIsLoading(true);
+  
+    try {
+      // Array to store extracted data
+      const allExtractedData = [];
+      
+      // Process the document for each insurer
+      for (const insurer of insurers) {
+        // Custom prompt specifically designed for insurance policy documents
+        const extractionPrompt = `
+          I need you to carefully extract specific insurance information from the ${insurer} policy document. 
+          Focus ONLY on extracting the exact values for each item listed below.
+  
+          For each item, provide ONLY the value with no extra explanation:
+  
+          ## Basic Policy Information
+          - Insured Name: [Extract the insured name, e.g., "M/s. The Peerless General Finance & Investment Co. Ltd"]
+          - Principal Name: [Extract the principal name]
+          - Contractor Name: [Extract the contractor name, e.g., "M/s. Larsen & Toubro Limited"]
+          - Risk Location: [Extract the exact risk location]
+          - Project Code/Job No.: [Extract project code"]
+          - Policy Period: [Extract policy period in months,"]
+          - Sum Insured: [Extract the total sum insured value"]
+          - Premium before tax: [Extract premium before tax"]
+          - GST amount: [Extract GST amount"]
+          - Final Premium: [Extract final premium amount"]
+          -Sum Insured :["Extract the sum Insured value" ]
+  
+          ## Excess/Deductible Information
+          - Normal Claims: [Extract normal claims excess"]
+          - AOG/Testing Claims: [Extract AOG/Testing claims excess"]
+          - Special Deductibles: [Extract any special deductibles mentioned]
+  
+          ## Standard Coverages
+          - Basic Premium: [Extract basic premium amount]
+          - Earthquake Cover: [Extract earthquake coverage details"]
+          - STFI: [Extract STFI coverage details"]
+          - Terrorism: [Extract terrorism coverage details]
+          - Marine: [Extract marine coverage details]
+          - Total Premium excluding GST: [Extract total premium excluding GST]
+          - GST @ 18%: [Extract GST amount or percentage]
+          - Total Premium including GST: [Extract total premium including GST]
+  
+          ## Add-on Covers
+          - Escalation: [Extract escalation details, ]
+          - Waiver of Subrogation: [Extract waiver details]
+          - Design Defect: [Extract design defect coverage details"]
+          - Owners Surrounding Property: [Extract details"]
+          - Cover for Offsite Storage/Fabrication: [Extract details]
+          - Plans & Documents/Valuable Documents: [Extract detail"]
+          - Put to Use: [Extract details]
+          - Breakage of Glass: [Extract details, ]
+          - Multiple Insured Clause: [Extract details]
+          - 50/50 Clause: [Extract details]
+          - 72 Hours Clause: [Extract details]
+          - Free Automatic Reinstatement: [Extract details"]
+          - Professional Fees: [Extract details]
+          - Waiver of Contribution Clause: [Extract details]
+          - Additional Custom Duty: [Extract details]
+          - Air Freight & Express Freight: [Extract details]
+          - Loss Minimization Expense: [Extract details]
+          - TPL with Cross Liability: [Extract details"]
+          - Debris Removal: [Extract details "]
+          - Cessation of Works: [Extract details"]
+          - Claim Preparation Costs: [Extract details]
+          - Temporary Repair Clause: [Extract details ]
+          - Improvement cost of insured property: [Extract details"]
+
+          ## Sum Insured Breakup
+          -Contract Price:["extract the contract price"]
+          -Additional to Cover all such work material in the BOQ.["Extract the detail"]
+          - All kind of temproary works ["Extract the detail"] 
+          - Extract the whole Table and Total sum insured Value
+  
+          Review the document carefully to find these specific values. If information isn't found, simply state "Not Found" for that item. Be precise and include exact monetary values, percentages, and conditions mentioned for each item.
+        `;
+  
+        // The document name for this insurer
+        const documentName = insurer === "ICICI" ? "Terms-LE23M976_-ICICI.pdf" : `Terms-${insurer}.pdf`;
+  
+        // Query the document for insurance data
+        const extractionResponse = await fetch('https://lntcs.ai/chatservice/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${bearerToken}`,
+            'accept': 'application/json'
+          },
+          body: JSON.stringify({
+            query: extractionPrompt,
+            space_name: "Insurance_usecase",
+            userId: "anonymous",
+            hint: `For the ${insurer} document, look for exact phrases, headings, and tables that contain the insurance details. Pay special attention to sections labeled as "Add on covers", "Special Conditions", "Sum Insured Breakup", and similar headings. Extract verbatim values where available - exact numbers, limits, and conditions as written in the document.`,
+            flow_name: "Quote-Comp",
+            embedding_metadata: {
+              "file_name": documentName
+            }
+          })
+        });
+  
+        if (!extractionResponse.ok) {
+          throw new Error(`Error extracting data for ${insurer}: ${extractionResponse.statusText}`);
+        }
+  
+        const extractionData = await extractionResponse.json();
+        
+        // Process the extracted data to fit our template
+        const processedData = {
+          insurer: insurer,
+          basicInfo: {},
+          coverages: {},
+          addOns: {},
+          excess: {}
+          
+        };
+  
+        // Parse the text response to extract structured data
+        const responseText = extractionData.response;
+        console.log(`${insurer} extraction response:`, responseText);
+        
+        // Map for basic policy information extraction
+        const basicInfoMapping = {
+          'Insured Name': ['Insured Name:', 'Insured Name'],
+          'Principal Name': ['Principal Name:', 'Principal Name', 'Name of Principal:'],
+          'Contractor Name': ['Contractor Name:', 'Contractor Name', 'Name of Contractor:'],
+          'Risk Location': ['Risk Location:', 'Risk Location'],
+          'Project Description': ['Project Description:', 'Project Description', 'Scope of Work:', 'Nature of Project:'],
+          'Policy Period': ['Policy Period:', 'Policy Period', 'Tentative Policy Period:'],
+          'Sum Insured': ['Sum Insured:', 'Sum Insured', 'Total Sum Insured:'],
+          'Premium (before tax)': ['Premium before tax:', 'Premium Before Service Tax:', 'Final Premium Before Service Tax:'],
+          'GST amount': ['GST amount:', 'GST:', 'GST @'],
+          'Final Premium': ['Final Premium:', 'Final premium:', 'Final Premium']
+        };
+        
+        // Extract basic policy information using multiple possible labels
+        Object.entries(basicInfoMapping).forEach(([key, possibleLabels]) => {
+          let value = 'Not Found';
+          
+          for (const label of possibleLabels) {
+            // Try to find the value using various patterns
+            const patterns = [
+              new RegExp(`${label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[\\s\\:\\-]+(.*?)(?=[\\n\\r]|$)`, 'i'),
+              new RegExp(`${label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[\\s\\:\\-]+([\\d\\,\\.\\s]+)`, 'i'),
+              new RegExp(`\\b${label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b[\\s\\:\\-]+([^\\n]+)`, 'i')
+            ];
+            
+            for (const pattern of patterns) {
+              const match = responseText.match(pattern);
+              if (match && match[1] && match[1].trim()) {
+                value = match[1].trim();
+                break;
+              }
+            }
+            
+            if (value !== 'Not Found') break;
+          }
+          
+          processedData.basicInfo[key] = value;
+        });
+  
+        // Map for excess/deductible information extraction
+        const excessMapping = {
+          'Normal claims': ['Normal Claims:', 'Normal claims', 'Normal:', 'Normal Claims -'],
+          'AOG/Testing claims': ['AOG/Testing Claims:', 'AOG/Testing claims', 'AOG / Testing claims'],
+          'Special deductibles': ['Special Deductibles:', 'Special deductibles', 'Excess on glass items']
+        };
+        
+        // Extract excess/deductible information
+        Object.entries(excessMapping).forEach(([key, possibleLabels]) => {
+          let value = 'Not Found';
+          
+          for (const label of possibleLabels) {
+            const pattern = new RegExp(`${label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[\\s\\:\\-]+([^\\n]+)`, 'i');
+            const match = responseText.match(pattern);
+            if (match && match[1] && match[1].trim()) {
+              value = match[1].trim();
+              break;
+            }
+          }
+          
+          processedData.excess[key] = value;
+        });
+  
+        // Map for standard coverages
+        const coveragesMapping = {
+          'Basic Premium': ['Basic Premium:', 'Basic Premium'],
+          'Earthquake - II': ['Earthquake Cover:', 'Earthquake Cover', 'Earthquake Coverage', 'Earthquake Cover \\(Fire & Shock\\)'],
+          'STFI': ['STFI:', 'STFI', 'STFI Coverage', 'STFI Included'],
+          'Terrorism': ['Terrorism:', 'Terrorism', 'Terrorism Coverage', 'End 32 - Terrorism'],
+          'Marine': ['Marine:', 'Marine', 'Marine Coverage'],
+          'Total Premium excl GST': ['Total Premium excluding GST:', 'Total Premium excl GST', 'Total Premium Before Service Tax'],
+          'GST @ 18%': ['GST @ 18%:', 'GST @ 18%', 'GST:'],
+          'Total Premium incl GST': ['Total Premium including GST:', 'Total Premium incl GST', 'Final premium']
+        };
+        
+        // Extract standard coverages
+        Object.entries(coveragesMapping).forEach(([key, possibleLabels]) => {
+          let value = 'Not Found';
+          
+          for (const label of possibleLabels) {
+            const pattern = new RegExp(`${label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[\\s\\:\\-]+([^\\n]+)`, 'i');
+            const match = responseText.match(pattern);
+            if (match && match[1] && match[1].trim()) {
+              value = match[1].trim();
+              break;
+            }
+          }
+          
+          processedData.coverages[key] = value;
+        });
+  
+        // Map for add-on covers
+        const addOnMapping = {
+          'Escalation': ['Escalation:', 'Escalation', 'Escalation upto'],
+          'Earthquake': ['Earthquake:', 'Earthquake', 'Earthquake Cover'],
+          'Waiver of Subrogation': ['Waiver of Subrogation:', 'Waiver of subrogation', 'Waiver of Subrogation'],
+          'Design Defect - DE3': ['Design Defect:', 'Design Defect', 'Design Defect -'],
+          'Owners Surrounding property with Flexa': ['Owners Surrounding Property:', "Owners' surrounding property", 'Owners Surrounding property'],
+          'Cover for offsite storage, fabrication': ['Cover for Offsite Storage/Fabrication:', 'Cover for offsite storage', 'Offsite storage'],
+          'Plans & Documents': ['Plans & Documents:', 'Valuable Documents', 'Cover for Valuable Documents'],
+          'Put to Use': ['Put to Use:', 'Put to Use', 'Continuity of cover during operational phase'],
+          'Breakage of glass': ['Breakage of Glass:', 'Breakage of Glass', 'Breakage of Glass Cover'],
+          'Multiple Insured Clause': ['Multiple Insured Clause:', 'Multiple Insured Clause'],
+          '50/50 Clause': ['50/50 Clause:', '50:50 Clause', '50/50 Clause'],
+          '72 hours clause': ['72 Hours Clause:', '72 Hours Clause'],
+          'Free Auto. Reinstatement upto 10%': ['Free Automatic Reinstatement:', 'Free Automatic Re-instatement', 'Free Auto. Reinstatement'],
+          'Professional Fees': ['Professional Fees:', 'Professional fees'],
+          'Waiver of contribution clause': ['Waiver of Contribution Clause:', 'Waiver of contribution clause'],
+          'Additional custom duty - upto 10 Cr': ['Additional Custom Duty:', 'Additional Custom duty'],
+          'Air freight & exp freight upto 30% claim': ['Air Freight & Express Freight:', 'Expediting cost', 'air freight & express freight'],
+          'Loss Minimisation Expense': ['Loss Minimization Expense:', 'Loss minimisation expenses'],
+          'TPL with Cross Liability': ['TPL with Cross Liability:', 'TPL with Cross Liability'],
+          'Debris Removal (Incl Foreign)': ['Debris Removal:', 'Debris Removal limit'],
+          'Cessation of Works': ['Cessation of Works:', 'Cessation of Works'],
+          'Claim Preparation Costs': ['Claim Preparation Costs:', 'Claims preparation Cost'],
+          'Temporary Repair Clause': ['Temporary Repair Clause:', 'Temporary Repair Clause'],
+          'Improvement cost actual of insured property': ['Improvement cost:', 'Improvement cost actual of insured property']
+        };
+        
+        // Extract add-on covers
+        Object.entries(addOnMapping).forEach(([key, possibleLabels]) => {
+          let value = 'Not Found';
+          
+          for (const label of possibleLabels) {
+            const pattern = new RegExp(`${label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[\\s\\:\\-]+([^\\n]+)`, 'i');
+            const match = responseText.match(pattern);
+            if (match && match[1] && match[1].trim()) {
+              value = match[1].trim();
+              break;
+            }
+          }
+          
+          // If not found, search for just included/covered
+          if (value === 'Not Found') {
+            const simplePattern = new RegExp(`${key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*(Included|Covered)`, 'i');
+            const simpleMatch = responseText.match(simplePattern);
+            if (simpleMatch) {
+              value = 'Included';
+            }
+          }
+          
+          processedData.addOns[key] = value;
+        });
+  
+        // Additional search for add-on covers in bulleted or listed format
+        const addOnSection = responseText.match(/Add[-\s]on covers:[\s\S]*?(?=Special Conditions|$)/i);
+        if (addOnSection && addOnSection[0]) {
+          const section = addOnSection[0];
+          
+          Object.keys(addOnMapping).forEach(key => {
+            if (processedData.addOns[key] === 'Not Found') {
+              // Try to find mentions of the add-on in the section
+              const keyPattern = new RegExp(`[-\\*•\\s]\\s*(${key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})\\b([^\\n]*)`, 'i');
+              const keyMatch = section.match(keyPattern);
+              
+              if (keyMatch && keyMatch[2]) {
+                processedData.addOns[key] = keyMatch[2].trim() || 'Included';
+              } else if (section.includes(key)) {
+                processedData.addOns[key] = 'Included';
+              }
+            }
+          });
+        }
+  
+        // Final sweep for any included items that might be in a bullet list
+        if (responseText.includes('Add on covers') || responseText.includes('Add-on covers')) {
+          Object.keys(addOnMapping).forEach(key => {
+            if (processedData.addOns[key] === 'Not Found') {
+              const simplifiedKey = key.replace(/\s*-.*$/, '').trim(); // Remove anything after a dash
+              const mentionPattern = new RegExp(`[-\\*•\\s]\\s*(${simplifiedKey.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})\\b`, 'i');
+              
+              if (responseText.match(mentionPattern)) {
+                processedData.addOns[key] = 'Included';
+              }
+            }
+          });
+        }
+  
+        allExtractedData.push(processedData);
+      }
+  
+      // Update state with extracted data
+      setExtractedData(allExtractedData);
+    } catch (error) {
+      console.error('Error extracting data:', error);
+      alert(`Error extracting data: ${error.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Function to handle template data changes
+  const handleTemplateChange = (e) => {
+    const { name, value } = e.target;
+    setTemplateData({
+      ...templateData,
+      [name]: value
+    });
+  };
+
+  // Function to export to Excel (this would be simplified - in real app you'd use a library)
+  const exportToExcel = () => {
+    alert('Export functionality would be implemented here with a proper Excel library');
+    // In a real app, you would use a library like xlsx or exceljs
+  };
+
+  return (
+    <div className="insurance-quote-comparator">
+      <style>
+        {`
+          .insurance-quote-comparator {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+          }
+          
+          h1, h2, h3 {
+            color: #2c3e50;
+          }
+          
+          .section {
+            margin-bottom: 30px;
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+          }
+          
+          .form-group {
+            margin-bottom: 15px;
+          }
+          
+          label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+          }
+          
+          input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+          }
+          
+          button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+            font-size: 16px;
+          }
+          
+          button:hover {
+            background-color: #2980b9;
+          }
+          
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+          }
+          
+          th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+          }
+          
+          th {
+            background-color: #f2f2f2;
+            position: sticky;
+            top: 0;
+          }
+          
+          .table-container {
+            max-height: 600px;
+            overflow-y: auto;
+            margin-top: 20px;
+          }
+          
+          .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 2s linear infinite;
+            margin: 20px auto;
+          }
+          
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+          
+          .first-col {
+            background-color: #f2f2f2;
+            font-weight: bold;
+          }
+          
+          .highlight {
+            background-color: #e6f7ff;
+          }
+          
+          .section-header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 10px;
+            font-weight: bold;
+            text-align: center;
+          }
+        `}
+      </style>
+      
+      <h1>Insurance Quote Comparator</h1>
+      
+      <div className="section">
+        <h2>Authentication</h2>
+        <div className="form-group">
+          <label>Bearer Token:</label>
+          <input 
+            type="password" 
+            value={bearerToken}
+            onChange={handleTokenChange}
+            placeholder="Enter your API bearer token"
+          />
+        </div>
+      </div>
+      
+      <div className="section">
+        <h2>Insurance Quote Comparison</h2>
+        <p>Click the button below to generate a comparison of insurance quotes from different providers.</p>
+        <button onClick={extractData} disabled={isLoading || !bearerToken}>
+          {isLoading ? 'Generating Comparison...' : 'Generate Quote Comparison'}
+        </button>
+        {isLoading && <div className="loader"></div>}
+      </div>
+      
+      <div className="section">
+        <h2>Basic Project Information</h2>
+        <div className="form-group">
+          <label>Job Description:</label>
+          <input 
+            type="text" 
+            name="jobDescription" 
+            value={templateData.jobDescription} 
+            onChange={handleTemplateChange} 
+          />
+        </div>
+        <div className="form-group">
+          <label>Client Name:</label>
+          <input 
+            type="text" 
+            name="clientName" 
+            value={templateData.clientName} 
+            onChange={handleTemplateChange} 
+          />
+        </div>
+        <div className="form-group">
+          <label>Policy Type:</label>
+          <input 
+            type="text" 
+            name="policyType" 
+            value={templateData.policyType} 
+            onChange={handleTemplateChange} 
+          />
+        </div>
+        <div className="form-group">
+          <label>Contract Period (Months):</label>
+          <input 
+            type="number" 
+            name="contractPeriod" 
+            value={templateData.contractPeriod} 
+            onChange={handleTemplateChange} 
+          />
+        </div>
+        <div className="form-group">
+          <label>Extended Maintenance Cover (Months):</label>
+          <input 
+            type="number" 
+            name="extMaintCover" 
+            value={templateData.extMaintCover} 
+            onChange={handleTemplateChange} 
+          />
+        </div>
+        <div className="form-group">
+          <label>Contract Value:</label>
+          <input 
+            type="text" 
+            name="contractValue" 
+            value={templateData.contractValue} 
+            onChange={handleTemplateChange} 
+          />
+        </div>
+        <div className="form-group">
+          <label>Total Sum Insured:</label>
+          <input 
+            type="text" 
+            name="totalSumInsured" 
+            value={templateData.totalSumInsured} 
+            onChange={handleTemplateChange} 
+          />
+        </div>
+      </div>
+      
+      {extractedData.length > 0 && (
+        <div className="section">
+          <h2>Quote Comparison</h2>
+          <button onClick={exportToExcel}>Export to Excel</button>
+          
+          <div className="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Details</th>
+                  {extractedData.map((data, index) => (
+                    <th key={index}>{data.insurer}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {/* Basic Project Information */}
+                <tr>
+                  <td colSpan={extractedData.length + 1} className="section-header">Project Information</td>
+                </tr>
+                <tr className="highlight">
+                  <td className="first-col">Job Description</td>
+                  <td colSpan={extractedData.length}>{templateData.jobDescription}</td>
+                </tr>
+                <tr>
+                  <td className="first-col">Client Name</td>
+                  <td colSpan={extractedData.length}>{templateData.clientName}</td>
+                </tr>
+                <tr>
+                  <td className="first-col">Policy Type</td>
+                  <td colSpan={extractedData.length}>{templateData.policyType}</td>
+                </tr>
+                <tr className="highlight">
+                  <td className="first-col">Period of Insurance (Months)</td>
+                  <td colSpan={extractedData.length}>{templateData.contractPeriod}</td>
+                </tr>
+                <tr>
+                  <td className="first-col">Contract Period</td>
+                  <td colSpan={extractedData.length}>{templateData.contractPeriod} Months</td>
+                </tr>
+                <tr>
+                  <td className="first-col">Ext.Maint.Cover</td>
+                  <td colSpan={extractedData.length}>{templateData.extMaintCover} Months</td>
+                </tr>
+                <tr className="highlight">
+                  <td className="first-col">Contract Value</td>
+                  <td colSpan={extractedData.length}>{templateData.contractValue}</td>
+                </tr>
+                <tr>
+                  <td className="first-col">Total Sum Insured</td>
+                  <td colSpan={extractedData.length}>{templateData.totalSumInsured}</td>
+                </tr>
+                
+                {/* Basic Policy Information */}
+                <tr>
+                  <td colSpan={extractedData.length + 1} className="section-header">Policy Information</td>
+                </tr>
+                {['Insured Name', 'Principal Name', 'Contractor Name', 'Risk Location', 'Project Description', 
+                 'Policy Period', 'Sum Insured', 'Premium (before tax)', 'GST amount', 'Final Premium'].map((item, idx) => (
+                  <tr key={`basic-${idx}`} className={idx % 2 === 0 ? '' : 'highlight'}>
+                    <td className="first-col">{item}</td>
+                    {extractedData.map((data, dataIdx) => (
+                      <td key={`basic-${idx}-${dataIdx}`}>{data.basicInfo[item] || 'Not Specified'}</td>
+                    ))}
+                  </tr>
+                ))}
+                
+                {/* Excess/Deductible Information */}
+                <tr>
+                  <td colSpan={extractedData.length + 1} className="section-header">Excess/Deductible Information</td>
+                </tr>
+                {['Normal claims', 'AOG/Testing claims', 'Special deductibles'].map((item, idx) => (
+                  <tr key={`excess-${idx}`} className={idx % 2 === 0 ? '' : 'highlight'}>
+                    <td className="first-col">{item}</td>
+                    {extractedData.map((data, dataIdx) => (
+                      <td key={`excess-${idx}-${dataIdx}`}>{data.excess[item] || 'Not Specified'}</td>
+                    ))}
+                  </tr>
+                ))}
+                
+                {/* Standard Coverages */}
+                <tr>
+                  <td colSpan={extractedData.length + 1} className="section-header">Standard Coverages</td>
+                </tr>
+                {standardCoverages.map((coverage, idx) => (
+                  <tr key={`coverage-${idx}`} className={idx % 2 === 0 ? '' : 'highlight'}>
+                    <td className="first-col">{coverage}</td>
+                    {extractedData.map((data, dataIdx) => (
+                      <td key={`coverage-${idx}-${dataIdx}`}>{data.coverages[coverage] || 'Not Specified'}</td>
+                    ))}
+                  </tr>
+                ))}
+                
+                {/* Add-on Covers */}
+                <tr>
+                  <td colSpan={extractedData.length + 1} className="section-header">Add-on Covers</td>
+                </tr>
+                {addOnCovers.map((addOn, idx) => (
+                  <tr key={`addon-${idx}`} className={idx % 2 === 0 ? '' : 'highlight'}>
+                    <td className="first-col">{addOn}</td>
+                    {extractedData.map((data, dataIdx) => (
+                      <td key={`addon-${idx}-${dataIdx}`}>{data.addOns[addOn] || 'Not Specified'}</td>
+                    ))}
+                  </tr>
+
+                    
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default InsuranceQuoteComparator;

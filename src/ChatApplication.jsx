@@ -12,7 +12,7 @@ const ChatApplication = () => {
   const spaceNameValue = "Insurance_usecase";
 
   // Get bearer token from CanvasAI
-  const bearerToken = "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICIyNzJza204SEFYVEl1MWgwNThyZUliVVJILWhLTEE5OElFOHdqMDlyXzJNIn0.eyJleHAiOjE3NDEwNzM1ODMsImlhdCI6MTc0MTA3MjA4MywiYXV0aF90aW1lIjoxNzQxMDY5MTkyLCJqdGkiOiI2NzEyYjFhNy1mMzBmLTQyMmQtOTFhNS1hY2VjMzFjMWE4MzYiLCJpc3MiOiJodHRwczovL2xudGNzLmFpL2tleWNsb2FrL3JlYWxtcy9jYW52YXNhaSIsImF1ZCI6ImJyb2tlciIsInN1YiI6ImQwNTkxZDg4LWUyYTEtNGE1OC1hODYxLWNiMTRjZTQ3NjJiZiIsInR5cCI6IkJlYXJlciIsImF6cCI6ImNhbnZhc2FpLWNvbnRyb2xwbGFuZS11aSIsIm5vbmNlIjoiODNhZDZiNWYtNDY4NC00NTA2LThhNGQtZmU2MmJjNjI5ZjYxIiwic2Vzc2lvbl9zdGF0ZSI6IjhhMjBmN2FjLWUyOTgtNDg4Ni1iMjZhLWVjNmE5NWNmNjE3ZCIsImFjciI6IjEiLCJhbGxvd2VkLW9yaWdpbnMiOlsiKiIsImh0dHBzOi8vbG50Y3MuYWkvc3R1ZGlvIl0sInJlc291cmNlX2FjY2VzcyI6eyJicm9rZXIiOnsicm9sZXMiOlsicmVhZC10b2tlbiJdfX0sInNjb3BlIjoib3BlbmlkIGVtYWlsIEdyb3VwU2NvcGUgcHJvZmlsZSIsInNpZCI6IjhhMjBmN2FjLWUyOTgtNDg4Ni1iMjZhLWVjNmE5NWNmNjE3ZCIsInVwbiI6ImVmZDI4MWFhLTUyM2EtNDhjNS1iZjY3LWE5ZmQzYTQ4ZmZiYiIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJuYW1lIjoiQW5hcyBTYWhlYiIsImdyb3VwcyI6WyIvY2FudmFzYWktYWRtaW4iLCIvY2FudmFzYWktY3JlYXRvciJdLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJlZmQyODFhYS01MjNhLTQ4YzUtYmY2Ny1hOWZkM2E0OGZmYmIiLCJnaXZlbl9uYW1lIjoiQW5hcyIsImZhbWlseV9uYW1lIjoiU2FoZWIiLCJlbWFpbCI6ImFuYXMuc2FoZWItY250QGxudGVjYy5jb20ifQ.OgbldflbcGQdrUC-cYw3sRUQDxpvSY4oLtRhOwguC5PlCHgF04Kw7u6WMD0fVGdfqT2IVdbdhmffhptsp7F9WsxXwB2Ryiygwyg4kEwEuwyFcMvI4r1ByQWCCxCiVmTeGYtWzdmmfabti8Q0NppOkya2Z6WP_BLLypj3tKdJRCuLjWsSsk1lhnKSM_FXBu0t-lxw8a5_XBzFrjmLezFbu2vK7QMomMH2jUCCNHGY9Cd7wSCwUMEjojXmQWZcksInD8CiZJmz6jD9-_71TtxloVwDaQKUmcYv1O-fjTQPns-RcSkSquUAucZlvpjkFP-fVGT3tnEcdenBaE5VVF-C5Q";
+  const bearerToken = "";
   // Auto-scroll to bottom when messages change
   useEffect(() => {
     scrollToBottom();
@@ -46,7 +46,7 @@ const ChatApplication = () => {
           query: query,
           space_name: spaceNameValue,
           userId: "anonymous", // Replace with a default value instead of userProfile
-          hint: "Act as an expert attorney specializing in insurance clauses for large-scale construction projects. You have extensive experience in analyzing tender documents and policy documents to extract relevant insurance obligations.Instructions:Extract clauses only related to the above categories.The extracted text should be directly from the tender or policy document.If summarization is needed!, provide a context-based summarization without altering the legal meaning.",
+          hint: "Act as an expert attorney specializing in insurance clauses for large-scale construction projects. You have extensive experience in analyzing tender documents and policy documents to extract relevant insurance obligations.Instructions:Extract clauses only related to the above categories.The extracted text should be directly from the tender or policy document. summarization is needed, provide a context-based summarization without altering the legal meaning.",
           //flow_name: "clause_generation",  // Added flow_name parameter
           //embedding_metadata: {            // Added embedding_metadata parameter
           //  "file_name": "Proposal_Form_by_Ins_Dept.pdf"
